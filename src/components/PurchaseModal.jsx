@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react'
 
-export default function PurchaseModal({ number, sessionId, onClose, onSuccess, onReserve }) {
+export default function PurchaseModal({ number, sessionId, onClose, onCancel, onSuccess, onReserve }) {
   const [name, setName] = useState('')
   const [email, setEmail] = useState('')
   const [paymentProof, setPaymentProof] = useState(null)
@@ -48,17 +48,6 @@ export default function PurchaseModal({ number, sessionId, onClose, onSuccess, o
       }
     }
   }, [])
-
-  const releaseNumber = async () => {
-    await fetch('/.netlify/functions/releaseNumber', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        number,
-        sessionId
-      }),
-    })
-  }
 
   const handleInputClick = () => {
     if (fileName) {
@@ -151,6 +140,8 @@ export default function PurchaseModal({ number, sessionId, onClose, onSuccess, o
     <div className="modal-backdrop">
       <div className="modal">
         <h2>Número {number}</h2>
+        <h2>Valor $10.000</h2>
+      
         <h5>Transferí al alias: lucia.ferrari27</h5>
 
         <div className="reservation-timer">
@@ -220,14 +211,7 @@ export default function PurchaseModal({ number, sessionId, onClose, onSuccess, o
               {loading ? 'Enviando...' : 'Confirmar'}
             </button>
 
-            <button
-              type="button"
-              onClick={async () => {
-                await releaseNumber()
-                onClose()
-              }}
-              className='btn-secondary'
-            >
+            <button type="button" onClick={onCancel || onClose} className='btn-secondary'>
               Cancelar
             </button>
           </div>
