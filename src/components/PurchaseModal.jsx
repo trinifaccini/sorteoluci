@@ -49,6 +49,17 @@ export default function PurchaseModal({ number, sessionId, onClose, onSuccess, o
     }
   }, [])
 
+  const releaseNumber = async () => {
+    await fetch('/.netlify/functions/releaseNumber', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        number,
+        sessionId
+      }),
+    })
+  }
+
   const handleInputClick = () => {
     if (fileName) {
       setFileName(null)
@@ -209,7 +220,14 @@ export default function PurchaseModal({ number, sessionId, onClose, onSuccess, o
               {loading ? 'Enviando...' : 'Confirmar'}
             </button>
 
-            <button type="button" onClick={onClose} className='btn-secondary'>
+            <button
+              type="button"
+              onClick={async () => {
+                await releaseNumber()
+                onClose()
+              }}
+              className='btn-secondary'
+            >
               Cancelar
             </button>
           </div>
