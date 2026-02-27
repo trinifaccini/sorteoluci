@@ -15,6 +15,10 @@ function Home() {
   const [showSuccess, setShowSuccess] = useState(false)
   const [successNumber, setSuccessNumber] = useState(null)
 
+  useEffect(() => {
+    window.scrollTo(0, 0)
+  }, [])
+
   const [sessionId] = useState(() => {
     let id = sessionStorage.getItem('sessionId')
     if (!id) {
