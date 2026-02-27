@@ -188,12 +188,44 @@ h1 {
   }
 }
 
+.actions-container {
+  display: flex;
+  gap: 12px;
+  justify-content: space-between;
+  margin-bottom: 24px
+}
+
+.custom-file-button {
+  background-color: #8a9b6e;
+  color: white;
+  padding: 10px 16px;
+  border-radius: 10px;
+  cursor: pointer;
+  display: inline-block;
+}
+
+.file-name-text {
+  margin-top: 8px;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
 /* TITULO MODAL */
 .modal h2 {
   text-align: center;
   margin-bottom: 16px;
   color: #3B4356;
   font-size: 1.8rem;
+  font-weight: 400;
+}
+
+.modal h5 {
+  text-align: center;
+  margin-bottom: 24px;
+  color: #3B4356;
+  font-size: 1.2rem;
   font-weight: 400;
 }
 
@@ -308,29 +340,6 @@ h1 {
   font-size: 15px;
   cursor: pointer;
   transition: all 0.2s ease;
-}
-
-/* BOTÓN CONFIRMAR */
-.modal button[type='submit'] {
-  background: #E8C468;
-  color: #3B4356;
-  font-weight: 700;
-}
-
-.modal button[type='submit']:hover {
-  background: #F0D07A;
-  transform: translateY(-1px);
-  box-shadow: 0 4px 12px rgba(232, 196, 104, 0.4);
-}
-
-/* BOTÓN CANCELAR */
-.modal button[type='button'] {
-  background: #f0f0f0;
-  color: #666;
-}
-
-.modal button[type='button']:hover {
-  background: #e0e0e0;
 }
 
 /* BOTÓN DESHABILITADO */
@@ -614,4 +623,120 @@ h1 {
   background: #A8B68C;
   transform: translateY(-2px);
   box-shadow: 0 8px 20px rgba(148, 163, 120, 0.4);
+}
+
+/* =========================
+   BOTONES MODAL - JERARQUÍA
+========================= */
+
+/* PRIMARIO - Confirmar */
+.btn-primary {
+  background: #E8C468;
+  color: #3B4356;
+  font-weight: 700;
+}
+
+.btn-primary:hover {
+  background: #F0D07A;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(232, 196, 104, 0.4);
+}
+
+/* SECUNDARIO - Cancelar */
+.btn-secondary {
+  background: #f0f0f0;
+  color: #666;
+}
+
+.btn-secondary:hover {
+  background: #e0e0e0;
+}
+
+/* FILE - Seleccionar */
+.btn-file {
+  background-color: #8a9b6e;
+  color: white;
+}
+
+.btn-file:hover {
+  background-color: #9faf82;
+}
+
+/* OUTLINE - Ver comprobante */
+.btn-outline {
+  background: #94A378;
+  border: 2px solid #94A378;
+  color: white;
+}
+
+/* DANGER - Borrar archivo */
+.btn-danger {
+  background: #f8d7da;
+  color: #842029;
+}
+
+.btn-danger:hover {
+  background: #f1bfc4;
+}
+
+/* =========================
+   PREVIEW MODAL
+========================= */
+
+.preview-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.65);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 2000;
+  padding: 1rem;
+}
+
+.preview-modal {
+  position: relative;
+  background: white;
+  max-width: 90vw;
+  max-height: 90vh;
+  border-radius: 16px;
+  padding: 20px;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.4);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.preview-modal img {
+  max-width: 100%;
+  max-height: 80vh;
+  border-radius: 10px;
+}
+
+.preview-modal iframe {
+  width: 80vw;
+  height: 80vh;
+  border: none;
+  border-radius: 10px;
+}
+
+.preview-close {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  background: rgba(0, 0, 0, 0.6);
+  color: white;
+  border: none;
+  border-radius: 6px;
+  width: 32px;
+  height: 32px;
+  cursor: pointer;
+  font-size: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.preview-close:hover {
+  background: rgba(0, 0, 0, 0.8);
 }
