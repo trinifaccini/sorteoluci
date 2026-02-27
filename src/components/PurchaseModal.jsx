@@ -6,13 +6,14 @@ export default function PurchaseModal({ number, sessionId, onClose, onSuccess, o
   const [paymentProof, setPaymentProof] = useState(null)
   const [previewUrl, setPreviewUrl] = useState(null)
   const [fileName, setFileName] = useState(null)
-  const [showPreview, setShowPreview] = useState(false)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState(null)
   const [timeLeft, setTimeLeft] = useState(240)
   const timerRef = useRef(null)
   const submittedRef = useRef(false)
   const onCloseRef = useRef(onClose)
+  const fileInputRef = useRef(null)
+  const [showPreviewModal, setShowPreviewModal] = useState(false)
 
   useEffect(() => {
     onCloseRef.current = onClose
@@ -48,7 +49,23 @@ export default function PurchaseModal({ number, sessionId, onClose, onSuccess, o
     }
   }, [])
 
+  const handleInputClick = () => {
+    if (fileName) {
+      setFileName(null)
+      setPreviewUrl(null)
+      setPaymentProof(null)
+      setShowPreviewModal(false)
+
+      if (fileInputRef.current) {
+        fileInputRef.current.value = ''
+      }
+    } else {
+      fileInputRef.current.click()
+    }
+  }
+
   const handleImageChange = (e) => {
+
     const file = e.target.files[0]
     if (!file) return
 
@@ -69,7 +86,7 @@ export default function PurchaseModal({ number, sessionId, onClose, onSuccess, o
     }
 
     setFileName(file.name)
-    setShowPreview(false)
+    setShowPreviewModal(false)
 
     const reader = new FileReader()
     reader.onloadend = () => {
@@ -119,13 +136,6 @@ export default function PurchaseModal({ number, sessionId, onClose, onSuccess, o
   const minutes = Math.floor(timeLeft / 60)
   const seconds = timeLeft % 60
 
-  const deletePreview = () => {
-    setPaymentProof(null)
-    setPreviewUrl(null)
-    setFileName(null)
-    setShowPreview(false)
-  }
-
   return (
     <div className="modal-backdrop">
       <div className="modal">
@@ -160,91 +170,78 @@ export default function PurchaseModal({ number, sessionId, onClose, onSuccess, o
               Subí tu comprobante de pago:
             </label>
 
-            <div>
+            <div className='actions-container'>
 
-              <input
-                id="payment-proof"
-                type="file"
-                accept="image/jpeg,image/png,application/pdf"
-                onChange={handleImageChange}
-                required
-                className="file-input"
-              />
+              <div>
+                <input
+                  ref={fileInputRef}
+                  id="payment-proof"
+                  type="file"
+                  accept="image/jpeg,image/png,application/pdf"
+                  onChange={handleImageChange}
+                  required={!fileName}
+                  className="file-input"
+                  style={{ display: 'none' }}
+                />
+                <button className={fileName ? "btn-danger" : "btn-file"} onClick={handleInputClick} type='button'>
+                  {fileName ? "🗑 Borrar" : "Seleccionar archivo"}
+                </button>
+              </div>
+              <div>
+                <button
+                  type="button"
+                  className="btn-outline"
+                  onClick={() => setShowPreviewModal(true)}
+                  disabled={fileName === null}
+                >
+                  Ver comprobante
+                </button>
+              </div>
+
 
             </div>
-
-            {fileName && (
-              <div className="actions-container">
-
-                <button
-                  type="button"
-                  className="delete-button"
-                  onClick={deletePreview}
-                  aria-label="Borrar comprobante"
-                  title="Borrar comprobante"
-                >
-                  <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    width="18"
-                    height="18"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth="2"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                  >
-                    <polyline points="3 6 5 6 21 6" />
-                    <path d="M19 6l-1 14H6L5 6" />
-                    <path d="M10 11v6" />
-                    <path d="M14 11v6" />
-                    <path d="M9 6V4h6v2" />
-                  </svg>
-                </button>
-                <button
-                  type="button"
-                  className="file-toggle"
-                  onClick={() => setShowPreview(prev => !prev)}
-                >
-                  {showPreview ? 'Ocultar comprobante' : 'Ver comprobante'}
-                </button>
-
-
-
-              </div>
-            )}
-
-            {showPreview && previewUrl && previewUrl.startsWith('data:image') && (
-              <div className="image-preview">
-                <img src={previewUrl} alt="Preview" />
-              </div>
-            )}
-
-            {showPreview && previewUrl && previewUrl.startsWith('data:application/pdf') && (
-              <div className="pdf-preview">
-                <iframe
-                  src={previewUrl}
-                  title="PDF Preview"
-                  width="100%"
-                  height="400px"
-                />
-              </div>
-            )}
           </div>
 
           {error && <p className="error">{error}</p>}
 
           <div className="modal-buttons">
-            <button type="submit" disabled={loading}>
+            <button type="submit" disabled={loading} className='btn-primary'>
               {loading ? 'Enviando...' : 'Confirmar'}
             </button>
 
-            <button type="button" onClick={onClose}>
+            <button type="button" onClick={onClose} className='btn-secondary'>
               Cancelar
             </button>
           </div>
         </form>
       </div>
+
+      {showPreviewModal && previewUrl && (
+        <div className="preview-backdrop" onClick={() => setShowPreviewModal(false)}>
+          <div className="preview-modal" onClick={(e) => e.stopPropagation()}>
+
+            <button
+              className="preview-close"
+              onClick={() => setShowPreviewModal(false)}
+            >
+              ✕
+            </button>
+
+            {previewUrl.startsWith('data:image') && (
+              <img src={previewUrl} alt="Preview" />
+            )}
+
+            {previewUrl.startsWith('data:application/pdf') && (
+              <iframe
+                src={previewUrl}
+                title="PDF Preview"
+              />
+            )}
+          </div>
+        </div>
+      )}
     </div>
+
+
   )
 }
