@@ -5,6 +5,7 @@ export default function Admin() {
   const [numbers, setNumbers] = useState(null)
   const [error, setError] = useState(null)
   const [currentPage, setCurrentPage] = useState(1)
+  const [emailFilter, setEmailFilter] = useState('')
 
   const ITEMS_PER_PAGE = 20
 
@@ -71,12 +72,15 @@ export default function Admin() {
     )
   }
 
+  // Filtrar por email
   const vendidos = Object.entries(numbers)
     .filter(([_, data]) => data.status === 'taken')
+    .filter(([_, data]) =>
+      data.email?.toLowerCase().includes(emailFilter.toLowerCase())
+    )
     .sort((a, b) => Number(a[0]) - Number(b[0]))
 
   const totalPages = Math.ceil(vendidos.length / ITEMS_PER_PAGE)
-
   const startIndex = (currentPage - 1) * ITEMS_PER_PAGE
   const paginatedVendidos = vendidos.slice(
     startIndex,
@@ -93,26 +97,42 @@ export default function Admin() {
         Exportar CSV
       </button>
 
-      {/* Paginación */}
+      {/* Filtro por email */}
       <div style={{ marginBottom: 20 }}>
-        <button
-          disabled={currentPage === 1}
-          onClick={() => setCurrentPage(prev => prev - 1)}
-        >
-          ← Anterior
-        </button>
-
-        <span style={{ margin: '0 10px' }}>
-          Página {currentPage} de {totalPages}
-        </span>
-
-        <button
-          disabled={currentPage === totalPages}
-          onClick={() => setCurrentPage(prev => prev + 1)}
-        >
-          Siguiente →
-        </button>
+        <input
+          type="text"
+          placeholder="Filtrar por email..."
+          value={emailFilter}
+          onChange={(e) => {
+            setEmailFilter(e.target.value)
+            setCurrentPage(1) // vuelve a página 1 al filtrar
+          }}
+          style={{ padding: 6, width: 250 }}
+        />
       </div>
+
+      {/* Paginación */}
+      {totalPages > 1 && (
+        <div style={{ marginBottom: 20 }}>
+          <button
+            disabled={currentPage === 1}
+            onClick={() => setCurrentPage(prev => prev - 1)}
+          >
+            ← Anterior
+          </button>
+
+          <span style={{ margin: '0 10px' }}>
+            Página {currentPage} de {totalPages}
+          </span>
+
+          <button
+            disabled={currentPage === totalPages}
+            onClick={() => setCurrentPage(prev => prev + 1)}
+          >
+            Siguiente →
+          </button>
+        </div>
+      )}
 
       {paginatedVendidos.map(([num, data]) => (
         <div key={num} style={{ borderBottom: '1px solid #ddd', padding: 10 }}>
@@ -133,7 +153,7 @@ export default function Admin() {
       ))}
 
       {vendidos.length === 0 && (
-        <p>No hay números vendidos todavía.</p>
+        <p>No hay resultados para ese filtro.</p>
       )}
     </div>
   )
