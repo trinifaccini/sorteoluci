@@ -151,7 +151,7 @@ export default function PurchaseModal({ number, sessionId, onClose, onSuccess, o
             <input
               id="payment-proof"
               type="file"
-              accept="image/*"
+              accept="image/jpeg,image/png,application/pdf"
               onChange={handleImageChange}
               required
               className="file-input"
