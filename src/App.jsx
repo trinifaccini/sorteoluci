@@ -105,6 +105,19 @@ function Home() {
             setSelectedNumber(null)
             setShowSuccess(true)
           }}
+          onCancel={async () => {
+            try {
+              await fetch('/.netlify/functions/cancelReservation', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ number: selectedNumber, sessionId }),
+              })
+            } catch (err) {
+              console.error('Error cancelando reserva:', err)
+            }
+            setSelectedNumber(null)
+            loadNumbers()
+          }}
           onReserve={async (num) => {
             try {
               const res = await fetch('/.netlify/functions/reserveNumber', {
