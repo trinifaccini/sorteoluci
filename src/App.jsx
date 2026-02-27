@@ -118,7 +118,6 @@ function Home() {
             } catch (err) {
               console.error('Error cancelando reserva:', err)
             }
-            loadNumbers()
           }}
           onReserve={async (num) => {
             try {
