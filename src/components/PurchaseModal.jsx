@@ -5,32 +5,30 @@ export default function PurchaseModal({ number, sessionId, onClose, onSuccess, o
   const [email, setEmail] = useState('')
   const [paymentProof, setPaymentProof] = useState(null)
   const [previewUrl, setPreviewUrl] = useState(null)
+  const [fileName, setFileName] = useState(null)
+  const [showPreview, setShowPreview] = useState(false)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState(null)
-  const [timeLeft, setTimeLeft] = useState(180) // 3 minutos en segundos
+  const [timeLeft, setTimeLeft] = useState(240)
   const timerRef = useRef(null)
-  const submittedRef = useRef(false) // Flag para saber si ya se envió
-  const onCloseRef = useRef(onClose) // Guardar onClose en ref
+  const submittedRef = useRef(false)
+  const onCloseRef = useRef(onClose)
 
-  // Actualizar la ref cuando onClose cambie
   useEffect(() => {
     onCloseRef.current = onClose
   }, [onClose])
 
-  // Reservar el número al abrir el modal (solo una vez)
   useEffect(() => {
     if (onReserve) {
       onReserve(number)
     }
-  }, []) // Solo al montar
+  }, [])
 
-  // Timer de countdown (separado, solo una vez)
   useEffect(() => {
     timerRef.current = setInterval(() => {
       setTimeLeft((prev) => {
         if (prev <= 1) {
           clearInterval(timerRef.current)
-          // Solo mostrar alert si NO se ha enviado el formulario
           if (!submittedRef.current) {
             alert('Tu reserva expiró. Por favor, selecciona el número nuevamente.')
             if (onCloseRef.current) {
@@ -48,31 +46,37 @@ export default function PurchaseModal({ number, sessionId, onClose, onSuccess, o
         clearInterval(timerRef.current)
       }
     }
-  }, []) // Solo al montar
+  }, [])
 
-  // AGREGAR función para manejar la imagen
   const handleImageChange = (e) => {
     const file = e.target.files[0]
     if (!file) return
 
-    // Validar tipo de archivo
-    if (!file.type.startsWith('image/')) {
-      setError('Por favor selecciona una imagen válida')
+    const allowedTypes = [
+      'image/jpeg',
+      'image/png',
+      'application/pdf'
+    ]
+
+    if (!allowedTypes.includes(file.type)) {
+      setError('Solo se permiten archivos JPG, JPEG, PNG o PDF')
       return
     }
 
-    // Validar tamaño (máx 5MB)
     if (file.size > 5 * 1024 * 1024) {
-      setError('La imagen debe ser menor a 5MB')
+      setError('El archivo debe ser menor a 5MB')
       return
     }
 
-    // Crear preview
+    setFileName(file.name)
+    setShowPreview(false)
+
     const reader = new FileReader()
     reader.onloadend = () => {
       setPreviewUrl(reader.result)
-      setPaymentProof(reader.result) // guardar base64
+      setPaymentProof(reader.result)
     }
+
     reader.readAsDataURL(file)
     setError(null)
   }
@@ -102,7 +106,6 @@ export default function PurchaseModal({ number, sessionId, onClose, onSuccess, o
       return
     }
 
-    // Marcar como enviado y limpiar el timer antes de cerrar
     submittedRef.current = true
     if (timerRef.current) {
       clearInterval(timerRef.current)
@@ -113,23 +116,32 @@ export default function PurchaseModal({ number, sessionId, onClose, onSuccess, o
     setLoading(false)
   }
 
-  // Formatear tiempo restante
   const minutes = Math.floor(timeLeft / 60)
   const seconds = timeLeft % 60
+
+  const deletePreview = () => {
+    setPaymentProof(null)
+    setPreviewUrl(null)
+    setFileName(null)
+    setShowPreview(false)
+  }
 
   return (
     <div className="modal-backdrop">
       <div className="modal">
         <h2>Número {number}</h2>
+        <h5>Transferí al alias: lucia.ferrari27</h5>
 
         <div className="reservation-timer">
-          <span>⏱️ Tiempo restante de reserva: {minutes}:{seconds.toString().padStart(2, '0')}</span>
+          <span>
+            ⏱️ Tiempo restante de reserva: {minutes}:{seconds.toString().padStart(2, '0')}
+          </span>
         </div>
 
         <form onSubmit={submit}>
           <input
             type="text"
-            placeholder="Nombre"
+            placeholder="Nombre completo"
             value={name}
             onChange={e => setName(e.target.value)}
             required
@@ -143,26 +155,78 @@ export default function PurchaseModal({ number, sessionId, onClose, onSuccess, o
             required
           />
 
-          {/* Campo de imagen */}
           <div className="file-input-container">
             <label htmlFor="payment-proof" className="file-label">
-              Comprobante de pago:
+              Subí tu comprobante de pago:
             </label>
-            <input
-              id="payment-proof"
-              type="file"
-              accept="image/jpeg,image/png,application/pdf"
-              onChange={handleImageChange}
-              required
-              className="file-input"
-            />
 
-            {/* Preview de la imagen */}
-            {previewUrl && (
+            <div>
+
+              <input
+                id="payment-proof"
+                type="file"
+                accept="image/jpeg,image/png,application/pdf"
+                onChange={handleImageChange}
+                required
+                className="file-input"
+              />
+
+            </div>
+
+            {fileName && (
+              <div className="actions-container">
+
+                <button
+                  type="button"
+                  className="delete-button"
+                  onClick={deletePreview}
+                  aria-label="Borrar comprobante"
+                  title="Borrar comprobante"
+                >
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    width="18"
+                    height="18"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  >
+                    <polyline points="3 6 5 6 21 6" />
+                    <path d="M19 6l-1 14H6L5 6" />
+                    <path d="M10 11v6" />
+                    <path d="M14 11v6" />
+                    <path d="M9 6V4h6v2" />
+                  </svg>
+                </button>
+                <button
+                  type="button"
+                  className="file-toggle"
+                  onClick={() => setShowPreview(prev => !prev)}
+                >
+                  {showPreview ? 'Ocultar comprobante' : 'Ver comprobante'}
+                </button>
+
+
+
+              </div>
+            )}
+
+            {showPreview && previewUrl && previewUrl.startsWith('data:image') && (
               <div className="image-preview">
-                <img
+                <img src={previewUrl} alt="Preview" />
+              </div>
+            )}
+
+            {showPreview && previewUrl && previewUrl.startsWith('data:application/pdf') && (
+              <div className="pdf-preview">
+                <iframe
                   src={previewUrl}
-                  alt="Preview"
+                  title="PDF Preview"
+                  width="100%"
+                  height="400px"
                 />
               </div>
             )}
@@ -171,7 +235,6 @@ export default function PurchaseModal({ number, sessionId, onClose, onSuccess, o
           {error && <p className="error">{error}</p>}
 
           <div className="modal-buttons">
-
             <button type="submit" disabled={loading}>
               {loading ? 'Enviando...' : 'Confirmar'}
             </button>
@@ -179,7 +242,6 @@ export default function PurchaseModal({ number, sessionId, onClose, onSuccess, o
             <button type="button" onClick={onClose}>
               Cancelar
             </button>
-
           </div>
         </form>
       </div>
