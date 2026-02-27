@@ -5,24 +5,24 @@ export default function Welcome() {
 
   return (
     <div className="welcome">
-      <h1>Rifa Solidaria</h1>
+      <h1>Sorteo Solidario</h1>
 
       <div className="welcome-card">
         <p>
-          Estamos realizando esta rifa para apoyar una causa muy especial.
+          Estamos realizando este sorteo para apoyar una causa muy especial.
         </p>
 
         <p>
-          Cada número comprado nos ayuda a acercarnos a nuestro objetivo.
+          Cada número es un paso más para cumplir un sueño 💛
         </p>
 
         <h3>¿Cómo participar?</h3>
 
         <ol>
           <li>Elegí tu número.</li>
-          <li>Realizá el pago.</li>
+          <li>Hacé la transferencia al alias indicado para comprar tu número.</li>
           <li>Subí tu comprobante.</li>
-          <li>Recibí la confirmación por email.</li>
+          <li>Recibí la confirmación por email :) </li>
         </ol>
 
         <button
