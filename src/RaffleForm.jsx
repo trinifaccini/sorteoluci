@@ -1,0 +1,44 @@
+import { useState } from 'react'
+
+export default function RaffleForm() {
+  const [nombre, setNombre] = useState('')
+  const [email, setEmail] = useState('')
+  const [numero, setNumero] = useState('')
+  const [comprobante, setComprobante] = useState(null)
+
+  const handleSubmit = (e) => {
+    e.preventDefault()
+    alert('Formulario OK (todavía no envía)')
+  }
+
+  return (
+    <form onSubmit={handleSubmit}>
+      <label>
+        Nombre
+        <input value={nombre} onChange={e => setNombre(e.target.value)} required />
+      </label>
+
+      <label>
+        Email
+        <input type="email" value={email} onChange={e => setEmail(e.target.value)} required />
+      </label>
+
+      <label>
+        Número de rifa
+        <input type="number" value={numero} onChange={e => setNumero(e.target.value)} required />
+      </label>
+
+      <label>
+        Comprobante de pago
+        <input
+          type="file"
+          accept="image/*"
+          onChange={e => setComprobante(e.target.files[0])}
+          required
+        />
+      </label>
+
+      <button type="submit">Enviar</button>
+    </form>
+  )
+}
