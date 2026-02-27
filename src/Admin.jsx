@@ -4,6 +4,9 @@ export default function Admin() {
   const [password, setPassword] = useState('')
   const [numbers, setNumbers] = useState(null)
   const [error, setError] = useState(null)
+  const [currentPage, setCurrentPage] = useState(1)
+
+  const ITEMS_PER_PAGE = 20
 
   const login = async () => {
     setError(null)
@@ -70,6 +73,15 @@ export default function Admin() {
 
   const vendidos = Object.entries(numbers)
     .filter(([_, data]) => data.status === 'taken')
+    .sort((a, b) => Number(a[0]) - Number(b[0]))
+
+  const totalPages = Math.ceil(vendidos.length / ITEMS_PER_PAGE)
+
+  const startIndex = (currentPage - 1) * ITEMS_PER_PAGE
+  const paginatedVendidos = vendidos.slice(
+    startIndex,
+    startIndex + ITEMS_PER_PAGE
+  )
 
   return (
     <div style={{ padding: 40 }}>
@@ -81,12 +93,32 @@ export default function Admin() {
         Exportar CSV
       </button>
 
-      {vendidos.map(([num, data]) => (
+      {/* Paginación */}
+      <div style={{ marginBottom: 20 }}>
+        <button
+          disabled={currentPage === 1}
+          onClick={() => setCurrentPage(prev => prev - 1)}
+        >
+          ← Anterior
+        </button>
+
+        <span style={{ margin: '0 10px' }}>
+          Página {currentPage} de {totalPages}
+        </span>
+
+        <button
+          disabled={currentPage === totalPages}
+          onClick={() => setCurrentPage(prev => prev + 1)}
+        >
+          Siguiente →
+        </button>
+      </div>
+
+      {paginatedVendidos.map(([num, data]) => (
         <div key={num} style={{ borderBottom: '1px solid #ddd', padding: 10 }}>
           <p><strong>Número:</strong> {num}</p>
           <p><strong>Nombre:</strong> {data.name}</p>
           <p><strong>Email:</strong> {data.email}</p>
-          <p><strong>Fecha:</strong> {new Date(data.date).toLocaleString()}</p>
 
           {data.proofKey && (
             <a
@@ -94,11 +126,15 @@ export default function Admin() {
               target="_blank"
               rel="noreferrer"
             >
-              Descargar comprobante
+              Comprobante
             </a>
           )}
         </div>
       ))}
+
+      {vendidos.length === 0 && (
+        <p>No hay números vendidos todavía.</p>
+      )}
     </div>
   )
 }
