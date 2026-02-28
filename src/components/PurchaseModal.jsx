@@ -1,43 +1,31 @@
-import { useState } from "react"
-import { cancelReservation, submitRaffle } from "../services/api"
+import { useEffect, useState } from 'react'
 
 export default function PurchaseModal({
-  selectedNumber,
+  number,
+  sessionId,
   onClose,
-  onReservationCancelled,
-  onPurchaseSuccess,
+  onSuccess,
+  onCancel,
+  onReserve
 }) {
-  const [loading, setLoading] = useState(false)
-  const [name, setName] = useState("")
-  const [email, setEmail] = useState("")
+  const [name, setName] = useState('')
+  const [email, setEmail] = useState('')
   const [file, setFile] = useState(null)
+  const [loading, setLoading] = useState(false)
   const [error, setError] = useState(null)
 
-  const handleCancel = async () => {
-    try {
-      setLoading(true)
-
-      await cancelReservation(selectedNumber)
-
-      // Avisamos al padre que se liberó el número
-      if (onReservationCancelled) {
-        onReservationCancelled(selectedNumber)
-      }
-
-      onClose()
-    } catch (err) {
-      console.error("Error cancelling reservation:", err)
-      setError("No se pudo cancelar la reserva. Intentá nuevamente.")
-    } finally {
-      setLoading(false)
+  // 👇 Reservamos apenas se abre el modal
+  useEffect(() => {
+    if (number !== null && onReserve) {
+      onReserve(number)
     }
-  }
+  }, [number])
 
   const handleSubmit = async (e) => {
     e.preventDefault()
 
     if (!name || !email || !file) {
-      setError("Completá todos los campos y subí el comprobante.")
+      setError('Completá todos los campos y subí el comprobante')
       return
     }
 
@@ -46,21 +34,27 @@ export default function PurchaseModal({
       setError(null)
 
       const formData = new FormData()
-      formData.append("number", selectedNumber)
-      formData.append("name", name)
-      formData.append("email", email)
-      formData.append("file", file)
+      formData.append('number', number)
+      formData.append('name', name)
+      formData.append('email', email)
+      formData.append('file', file)
+      formData.append('sessionId', sessionId)
 
-      await submitRaffle(formData)
+      const res = await fetch('/.netlify/functions/submitRaffle', {
+        method: 'POST',
+        body: formData
+      })
 
-      if (onPurchaseSuccess) {
-        onPurchaseSuccess(selectedNumber)
+      if (!res.ok) {
+        const data = await res.json()
+        throw new Error(data.error || 'Error enviando formulario')
       }
 
-      onClose()
+      onSuccess()
+
     } catch (err) {
-      console.error("Error submitting raffle:", err)
-      setError("Hubo un error al enviar el formulario.")
+      console.error(err)
+      setError(err.message || 'Error enviando formulario')
     } finally {
       setLoading(false)
     }
@@ -69,19 +63,19 @@ export default function PurchaseModal({
   return (
     <div className="modal-overlay">
       <div className="modal">
-        <h2>Número {selectedNumber}</h2>
+        <h2>Reservaste el número {number}</h2>
 
         <form onSubmit={handleSubmit}>
           <input
             type="text"
-            placeholder="Nombre"
+            placeholder="Tu nombre"
             value={name}
             onChange={(e) => setName(e.target.value)}
           />
 
           <input
             type="email"
-            placeholder="Email"
+            placeholder="Tu email"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
           />
@@ -92,16 +86,16 @@ export default function PurchaseModal({
             onChange={(e) => setFile(e.target.files[0])}
           />
 
-          {error && <p className="error">{error}</p>}
+          {error && <p style={{ color: 'red' }}>{error}</p>}
 
           <div className="modal-buttons">
             <button type="submit" disabled={loading}>
-              {loading ? "Enviando..." : "Confirmar compra"}
+              {loading ? 'Enviando...' : 'Confirmar compra'}
             </button>
 
             <button
               type="button"
-              onClick={handleCancel}
+              onClick={onCancel}
               disabled={loading}
             >
               Cancelar
