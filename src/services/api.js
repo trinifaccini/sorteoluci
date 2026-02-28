@@ -3,4 +3,10 @@ export async function fetchNumbers() {
     if (!res.ok) throw new Error('Error cargando números')
     return res.json()
   }
-  
+
+export const cancelReservation = async (number) => {
+  return fetch("/.netlify/functions/cancelReservation", {
+    method: "POST",
+    body: JSON.stringify({ number }),
+  })
+}
