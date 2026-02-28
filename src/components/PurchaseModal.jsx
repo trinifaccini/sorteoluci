@@ -1,249 +1,114 @@
-import { useState, useEffect, useRef } from 'react'
+import { useState } from "react"
+import { cancelReservation, submitRaffle } from "../services/api"
 
-export default function PurchaseModal({ number, sessionId, onClose, onCancel, onSuccess, onReserve }) {
-  const [name, setName] = useState('')
-  const [email, setEmail] = useState('')
-  const [paymentProof, setPaymentProof] = useState(null)
-  const [previewUrl, setPreviewUrl] = useState(null)
-  const [fileName, setFileName] = useState(null)
+export default function PurchaseModal({
+  selectedNumber,
+  onClose,
+  onReservationCancelled,
+  onPurchaseSuccess,
+}) {
   const [loading, setLoading] = useState(false)
+  const [name, setName] = useState("")
+  const [email, setEmail] = useState("")
+  const [file, setFile] = useState(null)
   const [error, setError] = useState(null)
-  const [timeLeft, setTimeLeft] = useState(240)
-  const timerRef = useRef(null)
-  const submittedRef = useRef(false)
-  const onCloseRef = useRef(onClose)
-  const fileInputRef = useRef(null)
-  const [showPreviewModal, setShowPreviewModal] = useState(false)
 
-  useEffect(() => {
-    onCloseRef.current = onClose
-  }, [onClose])
+  const handleCancel = async () => {
+    try {
+      setLoading(true)
 
-  useEffect(() => {
-    if (onReserve) {
-      onReserve(number)
-    }
-  }, [])
+      await cancelReservation(selectedNumber)
 
-  useEffect(() => {
-    timerRef.current = setInterval(() => {
-      setTimeLeft((prev) => {
-        if (prev <= 1) {
-          clearInterval(timerRef.current)
-          if (!submittedRef.current) {
-            alert('Tu reserva expiró. Por favor, selecciona el número nuevamente.')
-            if (onCloseRef.current) {
-              onCloseRef.current()
-            }
-          }
-          return 0
-        }
-        return prev - 1
-      })
-    }, 1000)
-
-    return () => {
-      if (timerRef.current) {
-        clearInterval(timerRef.current)
+      // Avisamos al padre que se liberó el número
+      if (onReservationCancelled) {
+        onReservationCancelled(selectedNumber)
       }
-    }
-  }, [])
 
-  const handleInputClick = () => {
-    if (fileName) {
-      setFileName(null)
-      setPreviewUrl(null)
-      setPaymentProof(null)
-      setShowPreviewModal(false)
-
-      if (fileInputRef.current) {
-        fileInputRef.current.value = ''
-      }
-    } else {
-      fileInputRef.current.click()
-    }
-  }
-
-  const handleImageChange = (e) => {
-
-    const file = e.target.files[0]
-    if (!file) return
-
-    const allowedTypes = [
-      'image/jpeg',
-      'image/png',
-      'application/pdf'
-    ]
-
-    if (!allowedTypes.includes(file.type)) {
-      setError('Solo se permiten archivos JPG, JPEG, PNG o PDF')
-      return
-    }
-
-    if (file.size > 5 * 1024 * 1024) {
-      setError('El archivo debe ser menor a 5MB')
-      return
-    }
-
-    setFileName(file.name)
-    setShowPreviewModal(false)
-
-    const reader = new FileReader()
-    reader.onloadend = () => {
-      setPreviewUrl(reader.result)
-      setPaymentProof(reader.result)
-    }
-
-    reader.readAsDataURL(file)
-    setError(null)
-  }
-
-  const submit = async (e) => {
-    e.preventDefault()
-    setLoading(true)
-    setError(null)
-
-    const res = await fetch('/.netlify/functions/submitRaffle', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        number,
-        name,
-        email,
-        paymentProof,
-        sessionId
-      }),
-    })
-
-    const data = await res.json()
-
-    if (!res.ok) {
-      setError(data.error || 'Error')
+      onClose()
+    } catch (err) {
+      console.error("Error cancelling reservation:", err)
+      setError("No se pudo cancelar la reserva. Intentá nuevamente.")
+    } finally {
       setLoading(false)
+    }
+  }
+
+  const handleSubmit = async (e) => {
+    e.preventDefault()
+
+    if (!name || !email || !file) {
+      setError("Completá todos los campos y subí el comprobante.")
       return
     }
 
-    submittedRef.current = true
-    if (timerRef.current) {
-      clearInterval(timerRef.current)
-      timerRef.current = null
+    try {
+      setLoading(true)
+      setError(null)
+
+      const formData = new FormData()
+      formData.append("number", selectedNumber)
+      formData.append("name", name)
+      formData.append("email", email)
+      formData.append("file", file)
+
+      await submitRaffle(formData)
+
+      if (onPurchaseSuccess) {
+        onPurchaseSuccess(selectedNumber)
+      }
+
+      onClose()
+    } catch (err) {
+      console.error("Error submitting raffle:", err)
+      setError("Hubo un error al enviar el formulario.")
+    } finally {
+      setLoading(false)
     }
-
-    await onSuccess()
-    setLoading(false)
   }
-
-  const minutes = Math.floor(timeLeft / 60)
-  const seconds = timeLeft % 60
 
   return (
-    <div className="modal-backdrop">
+    <div className="modal-overlay">
       <div className="modal">
-        <h2>Número {number}</h2>
-        <h2>Valor $10.000</h2>
-      
-        <h5>Transferí al alias: lucia.ferrari27</h5>
+        <h2>Número {selectedNumber}</h2>
 
-        <div className="reservation-timer">
-          <span>
-            ⏱️ Tiempo restante de reserva: {minutes}:{seconds.toString().padStart(2, '0')}
-          </span>
-        </div>
-
-        <form onSubmit={submit}>
+        <form onSubmit={handleSubmit}>
           <input
             type="text"
-            placeholder="Nombre completo"
+            placeholder="Nombre"
             value={name}
-            onChange={e => setName(e.target.value)}
-            required
+            onChange={(e) => setName(e.target.value)}
           />
 
           <input
             type="email"
             placeholder="Email"
             value={email}
-            onChange={e => setEmail(e.target.value)}
-            required
+            onChange={(e) => setEmail(e.target.value)}
           />
 
-          <div className="file-input-container">
-            <label htmlFor="payment-proof" className="file-label">
-              Subí tu comprobante de pago:
-            </label>
-
-            <div className='actions-container'>
-
-              <div>
-                <input
-                  ref={fileInputRef}
-                  id="payment-proof"
-                  type="file"
-                  accept="image/jpeg,image/png,application/pdf"
-                  onChange={handleImageChange}
-                  required={!fileName}
-                  className="file-input"
-                  style={{ display: 'none' }}
-                />
-                <button className={fileName ? "btn-danger" : "btn-file"} onClick={handleInputClick} type='button'>
-                  {fileName ? "🗑 Borrar" : "Seleccionar archivo"}
-                </button>
-              </div>
-              <div>
-                <button
-                  type="button"
-                  className="btn-outline"
-                  onClick={() => setShowPreviewModal(true)}
-                  disabled={fileName === null}
-                >
-                  Ver comprobante
-                </button>
-              </div>
-
-
-            </div>
-          </div>
+          <input
+            type="file"
+            accept="image/*,application/pdf"
+            onChange={(e) => setFile(e.target.files[0])}
+          />
 
           {error && <p className="error">{error}</p>}
 
           <div className="modal-buttons">
-            <button type="submit" disabled={loading} className='btn-primary'>
-              {loading ? 'Enviando...' : 'Confirmar'}
+            <button type="submit" disabled={loading}>
+              {loading ? "Enviando..." : "Confirmar compra"}
             </button>
 
-            <button type="button" onClick={onCancel || onClose} className='btn-secondary'>
+            <button
+              type="button"
+              onClick={handleCancel}
+              disabled={loading}
+            >
               Cancelar
             </button>
           </div>
         </form>
       </div>
-
-      {showPreviewModal && previewUrl && (
-        <div className="preview-backdrop" onClick={() => setShowPreviewModal(false)}>
-          <div className="preview-modal" onClick={(e) => e.stopPropagation()}>
-
-            <button
-              className="preview-close"
-              onClick={() => setShowPreviewModal(false)}
-            >
-              ✕
-            </button>
-
-            {previewUrl.startsWith('data:image') && (
-              <img src={previewUrl} alt="Preview" />
-            )}
-
-            {previewUrl.startsWith('data:application/pdf') && (
-              <iframe
-                src={previewUrl}
-                title="PDF Preview"
-              />
-            )}
-          </div>
-        </div>
-      )}
     </div>
-
-
   )
 }
