@@ -15,7 +15,6 @@ function Home() {
   const [showSuccess, setShowSuccess] = useState(false)
   const [successNumber, setSuccessNumber] = useState(null)
 
-  // 👇 Session ID persistente por navegador
   const [sessionId] = useState(() => {
     let id = sessionStorage.getItem('sessionId')
     if (!id) {
@@ -28,10 +27,7 @@ function Home() {
   const loadNumbers = async () => {
     try {
       const res = await fetch('/.netlify/functions/getNumbers')
-
-      if (!res.ok) {
-        throw new Error('Error loading numbers')
-      }
+      if (!res.ok) throw new Error('Error loading numbers')
 
       const data = await res.json()
 
@@ -42,7 +38,6 @@ function Home() {
         .map(([k]) => Number(k))
 
       setTakenNumbers(taken)
-
     } catch (err) {
       console.error(err)
       setError('No se pudieron cargar los números')
@@ -57,7 +52,7 @@ function Home() {
     return () => clearInterval(interval)
   }, [])
 
-  // ✅ RESERVAR
+  // ✅ RESERVAR (backend = única verdad)
   const handleReserve = async (num) => {
     try {
       const res = await fetch('/.netlify/functions/reserveNumber', {
@@ -70,12 +65,12 @@ function Home() {
         const data = await res.json()
         alert(data.error || 'El número no está disponible')
         setSelectedNumber(null)
-        loadNumbers()
+        await loadNumbers()
         return
       }
 
-      // Lo marcamos como tomado visualmente
-      setTakenNumbers(prev => [...prev, num])
+      // Solo sincronizamos con backend
+      await loadNumbers()
 
     } catch (err) {
       console.error('Error reservando:', err)
@@ -101,10 +96,9 @@ function Home() {
         return
       }
 
-      // Ahora sí actualizamos
-      setTakenNumbers(prev => prev.filter(n => n !== numToCancel))
       setSelectedNumber(null)
 
+      // Sincronizamos después de cancelar
       await loadNumbers()
 
     } catch (err) {
@@ -127,7 +121,7 @@ function Home() {
 
       <div className="container">
         <NumberBoard
-          takenNumbers={takenNumbers.filter(n => n !== selectedNumber)}
+          takenNumbers={takenNumbers}
           onSelect={setSelectedNumber}
         />
       </div>
@@ -137,11 +131,11 @@ function Home() {
           number={selectedNumber}
           sessionId={sessionId}
           onClose={() => setSelectedNumber(null)}
-          onSuccess={() => {
+          onSuccess={async () => {
             setSuccessNumber(selectedNumber)
             setSelectedNumber(null)
             setShowSuccess(true)
-            loadNumbers()
+            await loadNumbers()
           }}
           onCancel={handleCancel}
           onReserve={handleReserve}
